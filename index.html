@@ -3,39 +3,59 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Pixel Cosmos — A personal research and blog website">
-  <meta name="theme-color" content="#0a0a1a">
-  <title>Pixel Cosmos</title>
+  <meta name="description" content="Personal research and blog website">
+  <title>Cosmos</title>
+
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Share+Tech+Mono&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Share+Tech+Mono&display=swap"></noscript>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Orbitron:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Site icon — change the emoji to whatever you like -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌌</text></svg>">
+
+  <!-- Styles (do not edit — change design in css/style.css) -->
   <link rel="stylesheet" href="css/style.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪐</text></svg>">
 </head>
 <body>
-<div class="scanline-overlay"></div>
-<canvas id="starfield"></canvas>
-<div id="app">
-  <main id="main-content"></main>
-  <div id="search-overlay">
-    <div class="search-box">
-      <div class="pixel-corner tl"></div><div class="pixel-corner tr"></div>
-      <div class="pixel-corner bl"></div><div class="pixel-corner br"></div>
-      <div class="search-title">// SEARCH</div>
-      <div class="search-input-row">
-        <input type="text" id="search-input" placeholder="Type keywords..." autocomplete="off" spellcheck="false">
-        <button class="pixel-btn" onclick="window.COSMOS.closeSearch()">✕</button>
+
+  <div class="scanline-overlay"></div>
+  <canvas id="starfield"></canvas>
+
+  <div id="app">
+    <main id="main-content"></main>
+
+    <!-- Search overlay -->
+    <div id="search-overlay">
+      <div class="search-box">
+        <div class="search-title">Search</div>
+        <div class="search-input-row">
+          <input type="text" id="search-input" placeholder="Type keywords..." autocomplete="off" spellcheck="false">
+          <button class="pixel-btn" onclick="window.COSMOS.closeSearch()">&#x2715;</button>
+        </div>
+        <div id="search-results"></div>
       </div>
-      <div id="search-results"></div>
     </div>
+
+    <footer>
+      <span>&#9670;</span> COSMOS &nbsp;&middot;&nbsp; Powered by GitHub Pages &nbsp;&middot;&nbsp;
+      <span>Made with &#x2665; in the universe</span>
+    </footer>
   </div>
-  <footer>
-    <span>★</span> PIXEL COSMOS <span>★</span> &nbsp;·&nbsp; Powered by GitHub Pages &nbsp;·&nbsp; <span>Made with ♥ in the cosmos</span>
-  </footer>
-</div>
-<div id="toast"></div>
-<script src="js/data.js"></script>
-<script src="js/main.js"></script>
+
+  <div id="toast"></div>
+
+  <!--
+    ╔══════════════════════════════════════════╗
+    ║  EDIT YOUR CONTENT IN:  js/data.js       ║
+    ║  - About Me info                         ║
+    ║  - Research posts                        ║
+    ║  - Blog posts                            ║
+    ║  DO NOT edit main.js or style.css        ║
+    ╚══════════════════════════════════════════╝
+  -->
+  <script src="js/data.js"></script>
+  <script src="js/main.js"></script>
+
 </body>
 </html>

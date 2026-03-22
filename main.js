@@ -20,6 +20,7 @@
     navigateTo('home');
     updateLang();
     initSearch();
+    setTimeout(initHeroCanvas, 50);
   });
 
   // ===== THEME =====
@@ -91,7 +92,8 @@
         <button class="pixel-btn icon-btn" id="search-open-btn" onclick="window.COSMOS.openSearch()" title="Search">🔍</button>
       </div>
     `;
-    document.getElementById('app').prepend(bar);
+    const mc = document.getElementById('main-content');
+    mc.parentNode.insertBefore(bar, mc);
     updateThemeBtn();
   }
 
@@ -108,7 +110,8 @@
     nav.innerHTML = pages.map(p => `
       <a href="#" class="nav-link" data-page="${p.id}" data-i18n="${p.key}" onclick="window.COSMOS.navigateTo('${p.id}'); return false;">${t(p.key)}</a>
     `).join('');
-    document.getElementById('app').prepend(nav);
+    // Append navbar INTO top-bar on the right side
+    document.getElementById('top-bar').appendChild(nav);
   }
 
   function setActiveNav(page) {
@@ -145,11 +148,17 @@
     return `
       <section class="page" id="page-home">
         <div class="hero">
-          <div class="hero-planet">
-            <div class="planet-body"></div>
-            <div class="planet-ring"></div>
+          <div class="hero-hud">
+            <div class="hud-corner tl"></div>
+            <div class="hud-corner tr"></div>
           </div>
-          <div class="pixel-stars-deco">★ ✦ ★ ✦ ★</div>
+          <div class="hero-cosmos-wrap">
+            <canvas id="hero-canvas" width="440" height="440"></canvas>
+          </div>
+          <div class="hero-status-row">
+            <span class="status-dot"></span>
+            <span class="status-label" id="hero-badge">SYSTEM ONLINE</span>
+          </div>
           <h1 class="hero-title" data-i18n="hero_greeting">${t('hero_greeting')}</h1>
           <p class="hero-subtitle typing-cursor" data-i18n="hero_subtitle">${t('hero_subtitle')}</p>
         </div>
@@ -243,6 +252,7 @@
       <article class="post-card" onclick="window.COSMOS.openPost('${post.id}', '${post.type}')">
         <div class="pixel-corner tl"></div>
         <div class="pixel-corner tr"></div>
+        <div class="card-scan"></div>
         ${thumb}
         <div class="post-body">
           <div class="post-tag">${tag}</div>
@@ -444,6 +454,55 @@
   }
 
   // ===== STARFIELD CANVAS =====
+function initHeroCanvas() {
+      const canvas = document.getElementById('hero-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const W=440,H=440,cx=220,cy=220;
+      const isLight=()=>document.documentElement.getAttribute('data-theme')==='light';
+      const bodies=[
+        {a:80,b:30,period:88, phase:0.5,r:5, dark:'#9a9a9a',lite:'#aa5522'},
+        {a:116,b:44,period:224,phase:2.1,r:7, dark:'#e8c87a',lite:'#e09020'},
+        {a:155,b:58,period:365,phase:4.2,r:9, dark:'#4A90D9',lite:'#2266cc'},
+        {a:192,b:72,period:687,phase:1.7,r:6, dark:'#CD5C5C',lite:'#cc3300'},
+      ];
+      const stars=Array.from({length:90},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.2+0.2,a:Math.random(),da:(Math.random()-0.5)*0.012}));
+      let tick=0;
+      function frame(){
+        ctx.clearRect(0,0,W,H);
+        const light=isLight();
+        if(!light){
+          stars.forEach(s=>{s.a+=s.da;if(s.a<0.07)s.da=Math.abs(s.da);if(s.a>0.9)s.da=-Math.abs(s.da);ctx.globalAlpha=s.a;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle='#c8d8ff';ctx.fill();});
+          ctx.globalAlpha=1;
+          const pg=ctx.createRadialGradient(cx-16,cy-16,2,cx,cy,52);
+          pg.addColorStop(0,'#9966ff');pg.addColorStop(0.7,'#4422cc');pg.addColorStop(1,'#110844');
+          ctx.beginPath();ctx.arc(cx,cy,52,0,Math.PI*2);ctx.fillStyle=pg;ctx.fill();
+          ctx.beginPath();ctx.ellipse(cx,cy,78,18,0,0,Math.PI*2);ctx.strokeStyle='rgba(150,100,255,0.4)';ctx.lineWidth=6;ctx.stroke();
+        } else {
+
+          for(let i=0;i<16;i++){const a=i*Math.PI/8+(tick*0.003);const r2=55+Math.sin(tick*0.06+i*0.7)*6;ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*40,cy+Math.sin(a)*40);ctx.lineTo(cx+Math.cos(a)*r2,cy+Math.sin(a)*r2);ctx.strokeStyle='rgba(255,200,50,'+(0.35+0.2*Math.sin(tick*0.05+i))+')';ctx.lineWidth=1.8;ctx.stroke();}
+          const sunG=ctx.createRadialGradient(cx-10,cy-10,2,cx,cy,38);
+          sunG.addColorStop(0,'#ffffc0');sunG.addColorStop(0.4,'#ffe040');sunG.addColorStop(1,'#ff9900');
+          ctx.beginPath();ctx.arc(cx,cy,38,0,Math.PI*2);ctx.fillStyle=sunG;ctx.fill();
+        }
+        bodies.forEach(b=>{
+          const angle=(tick/b.period)*Math.PI*2+b.phase;
+          const px=cx+Math.cos(angle)*b.a,py=cy+Math.sin(angle)*b.b;
+          ctx.beginPath();ctx.ellipse(cx,cy,b.a,b.b,0,0,Math.PI*2);
+          ctx.strokeStyle=light?'rgba(160,80,0,0.2)':'rgba(60,40,160,0.2)';ctx.lineWidth=0.7;ctx.stroke();
+          const col=light?b.lite:b.dark;
+          const glw=ctx.createRadialGradient(px,py,0,px,py,b.r*2.8);
+          glw.addColorStop(0,col+'66');glw.addColorStop(1,'rgba(0,0,0,0)');
+          ctx.fillStyle=glw;ctx.beginPath();ctx.arc(px,py,b.r*2.8,0,Math.PI*2);ctx.fill();
+          const plg=ctx.createRadialGradient(px-b.r*0.35,py-b.r*0.35,b.r*0.1,px,py,b.r);
+          plg.addColorStop(0,col+'ff');plg.addColorStop(1,col+'88');
+          ctx.beginPath();ctx.arc(px,py,b.r,0,Math.PI*2);ctx.fillStyle=plg;ctx.fill();
+        });
+        tick++;requestAnimationFrame(frame);
+      }
+      frame();
+    }
+
   function initStarfield() {
     const canvas = document.getElementById('starfield');
     if (!canvas) return;
@@ -488,11 +547,11 @@
       if (isLight) {
         stars.forEach(s => {
           s.a += s.da;
-          if (s.a < 0.05) s.da = Math.abs(s.da);
-          if (s.a > 0.3) s.da = -Math.abs(s.da);
+          if(s.a<0.02)s.da=Math.abs(s.da);
+          if(s.a>0.15)s.da=-Math.abs(s.da);
           ctx.beginPath();
-          ctx.arc(s.x*w, s.y*h, s.r, 0, Math.PI*2);
-          ctx.fillStyle = `rgba(80,80,160,${s.a * 0.5})`;
+          ctx.arc(s.x*w, s.y*h, s.r*0.6, 0, Math.PI*2);
+          ctx.fillStyle=`rgba(180,100,40,${s.a*0.25})`;
           ctx.fill();
         });
       } else {
