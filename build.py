@@ -26,23 +26,21 @@ from datetime import datetime
 # ============================================================
 #  ✅ CONFIGURE HERE
 # ============================================================
-
-GITHUB_USER = "yiming-zhu-98"          # your GitHub username
-GITHUB_REPO = "yiming-zhu-98.github.io"   # your repository name
-GITHUB_BRANCH = "version1"                  # branch (usually main or master)
-
-# Set to True to use jsDelivr CDN for all images/
-USE_CDN = True
+GITHUB_USER   = "yiming-zhu-98"
+GITHUB_REPO   = "yiming-zhu-98.github.io"
+GITHUB_BRANCH = "version1"
+USE_CDN       = True
 
 # ============================================================
 
-ROOT         = Path(__file__).parent
+ROOT = Path(__file__).parent
 RESEARCH_DIR = ROOT / "posts" / "research"
 BLOGS_DIR    = ROOT / "posts" / "blogs"
 OUTPUT       = ROOT / "js" / "data.js"
 
 CDN_BASE = (
-    f"https://cdn.jsdelivr.net/gh/{GITHUB_USER}/{GITHUB_REPO}@{GITHUB_BRANCH}"
+    # f"https://cdn.jsdelivr.net/gh/{GITHUB_USER}/{GITHUB_REPO}@{GITHUB_BRANCH}"
+    f"https://raw.githubusercontent.com/{GITHUB_USER}/{GITHUB_REPO}/{GITHUB_BRANCH}"
     if USE_CDN and GITHUB_USER else ""
 )
 
