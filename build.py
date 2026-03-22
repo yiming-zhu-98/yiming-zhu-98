@@ -29,7 +29,7 @@ from datetime import datetime
 GITHUB_USER   = "yiming-zhu-98"
 GITHUB_REPO   = "yiming-zhu-98.github.io"
 GITHUB_BRANCH = "version1"
-USE_CDN       = True
+USE_CDN       = False
 
 # ============================================================
 
