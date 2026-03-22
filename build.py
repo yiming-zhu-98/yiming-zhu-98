@@ -3,22 +3,18 @@
 build.py — Cosmos site builder
 ================================
 Reads all .md files from posts/research/ and posts/blogs/,
-then generates js/data.js automatically.
+then generates js/data.js which ONLY contains the posts arrays.
+Personal info (i18n + about) lives in js/config.js — edit that directly.
 
 USAGE:
     python build.py
 
-Run this every time you add or edit a post, then do:
+Run this every time you add or edit a post, then:
     git add .
     git commit -m "update posts"
     git push
 
 MARKDOWN FILE FORMAT:
-    Each .md file must start with a YAML front matter block
-    between --- lines, followed by the English content,
-    then an optional ---zh--- divider and Chinese content.
-
-    Example:
     ---
     id: blog-2025-04
     emoji: 🚀
@@ -30,65 +26,46 @@ MARKDOWN FILE FORMAT:
     excerpt_zh: 显示在卡片上的中文摘要。
     ---
 
-    # English content here (Markdown)
+    # English content (Markdown)
 
     ---zh---
 
-    # 中文内容写在这里（Markdown）
+    # 中文内容（Markdown）
 """
 
-import os
-import re
-import json
+import os, re, json
 from pathlib import Path
 from datetime import datetime
 
-# ── paths ──────────────────────────────────────────────────────────
-ROOT        = Path(__file__).parent
-POSTS_DIR   = ROOT / "posts"
-RESEARCH_DIR = POSTS_DIR / "research"
-BLOGS_DIR   = POSTS_DIR / "blogs"
-OUTPUT      = ROOT / "js" / "data.js"
-CONFIG      = ROOT / "js" / "config.js"   # your personal info lives here
+ROOT         = Path(__file__).parent
+RESEARCH_DIR = ROOT / "posts" / "research"
+BLOGS_DIR    = ROOT / "posts" / "blogs"
+OUTPUT       = ROOT / "js" / "data.js"
 
-# ── helpers ────────────────────────────────────────────────────────
 
 def parse_md(filepath: Path) -> dict:
-    """Parse a .md file with YAML front matter and optional ---zh--- divider."""
     text = filepath.read_text(encoding="utf-8")
-
-    # --- Extract front matter ---
     fm_match = re.match(r"^---\s*\n(.*?)\n---\s*\n", text, re.DOTALL)
     if not fm_match:
-        raise ValueError(f"No front matter found in {filepath.name}\n"
-                         f"File must start with:\n---\nid: ...\ntitle: ...\n---")
+        raise ValueError(f"No front matter found in {filepath.name}")
     fm_text = fm_match.group(1)
     body    = text[fm_match.end():]
 
-    # Simple YAML key: value parser (no nesting needed)
     meta = {}
     for line in fm_text.splitlines():
         m = re.match(r'^(\w+)\s*:\s*(.*)', line)
         if m:
             key, val = m.group(1), m.group(2).strip()
-            # Strip surrounding quotes if present
             if (val.startswith('"') and val.endswith('"')) or \
                (val.startswith("'") and val.endswith("'")):
                 val = val[1:-1]
             meta[key] = val
 
-    # --- Split English / Chinese content ---
-    if "---zh---" in body:
-        en_body, zh_body = body.split("---zh---", 1)
-    else:
-        en_body = body
-        zh_body = ""
+    en_body, zh_body = (body.split("---zh---", 1) + [""])[:2]
 
-    # Required fields
-    required = ["id", "date", "title", "title_zh", "excerpt", "excerpt_zh"]
-    for field in required:
+    for field in ["id", "date", "title", "title_zh", "excerpt", "excerpt_zh"]:
         if field not in meta:
-            raise ValueError(f"Missing field '{field}' in front matter of {filepath.name}")
+            raise ValueError(f"Missing '{field}' in {filepath.name}")
 
     return {
         "id":         meta["id"],
@@ -105,66 +82,46 @@ def parse_md(filepath: Path) -> dict:
 
 
 def load_posts(directory: Path) -> list:
-    """Load and sort all .md files in a directory, newest first."""
     if not directory.exists():
-        print(f"  ⚠  Directory not found: {directory} — skipping")
+        print(f"  ⚠  Not found: {directory}")
         return []
-
     posts = []
     for md_file in sorted(directory.glob("*.md")):
         try:
-            post = parse_md(md_file)
-            posts.append(post)
+            posts.append(parse_md(md_file))
             print(f"  ✓  {md_file.name}")
         except Exception as e:
             print(f"  ✗  {md_file.name}: {e}")
-
-    # Sort by date descending (newest first)
     posts.sort(key=lambda p: p["date"], reverse=True)
     return posts
 
 
-def js_string(s: str) -> str:
-    """Escape a string for use inside a JS template literal (backtick string)."""
+def js_str(s: str) -> str:
     return s.replace("\\", "\\\\").replace("`", "\\`").replace("${", "\\${")
 
 
-def post_to_js(post: dict, indent: str = "    ") -> str:
-    """Render a post dict as a JS object literal."""
-    lines = ["{"]
-    lines.append(f'  id:         {json.dumps(post["id"])},')
-    lines.append(f'  emoji:      {json.dumps(post["emoji"])},')
-    lines.append(f'  image:      {json.dumps(post["image"])},')
-    lines.append(f'  date:       {json.dumps(post["date"])},')
-    lines.append(f'  title:      {json.dumps(post["title"])},')
-    lines.append(f'  title_zh:   {json.dumps(post["title_zh"])},')
-    lines.append(f'  excerpt:    {json.dumps(post["excerpt"])},')
-    lines.append(f'  excerpt_zh: {json.dumps(post["excerpt_zh"])},')
-    lines.append(f'  content: `\n{js_string(post["content"])}\n  `,')
-    lines.append(f'  content_zh: `\n{js_string(post["content_zh"])}\n  `')
-    lines.append("}")
-    return ("\n" + indent).join(lines)
+def post_to_js(post: dict) -> str:
+    lines = [
+        "  {",
+        f'    id:         {json.dumps(post["id"])},',
+        f'    emoji:      {json.dumps(post["emoji"])},',
+        f'    image:      {json.dumps(post["image"])},',
+        f'    date:       {json.dumps(post["date"])},',
+        f'    title:      {json.dumps(post["title"])},',
+        f'    title_zh:   {json.dumps(post["title_zh"])},',
+        f'    excerpt:    {json.dumps(post["excerpt"])},',
+        f'    excerpt_zh: {json.dumps(post["excerpt_zh"])},',
+        f'    content: `\n{js_str(post["content"])}\n    `,',
+        f'    content_zh: `\n{js_str(post["content_zh"])}\n    `',
+        "  }",
+    ]
+    return "\n".join(lines)
 
-
-# ── read config.js for personal info ───────────────────────────────
-
-def read_config() -> str:
-    """Read config.js which contains i18n and about sections."""
-    if not CONFIG.exists():
-        raise FileNotFoundError(
-            f"config.js not found at {CONFIG}\n"
-            f"Expected: js/config.js containing i18n and about sections."
-        )
-    return CONFIG.read_text(encoding="utf-8")
-
-
-# ── main build ─────────────────────────────────────────────────────
 
 def build():
     print("\n🚀 Cosmos site builder")
     print("=" * 40)
 
-    # Load posts
     print("\nLoading research posts...")
     research = load_posts(RESEARCH_DIR)
 
@@ -173,40 +130,28 @@ def build():
 
     print(f"\nTotal: {len(research)} research, {len(blogs)} blogs")
 
-    # Read config
-    try:
-        config_content = read_config()
-    except FileNotFoundError as e:
-        print(f"\n✗ {e}")
-        return
+    research_js = ",\n\n".join(post_to_js(p) for p in research)
+    blogs_js    = ",\n\n".join(post_to_js(p) for p in blogs)
 
-    # Build research array
-    research_js = ",\n\n    ".join(post_to_js(p, "    ") for p in research)
-    blogs_js    = ",\n\n    ".join(post_to_js(p, "    ") for p in blogs)
-
-    # Generate data.js
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     output = f"""// ============================================================
 //  js/data.js — AUTO-GENERATED by build.py
 //  Last built: {now}
 //
 //  ⚠  DO NOT edit this file directly.
-//     Edit your posts in:  posts/research/*.md
-//                          posts/blogs/*.md
-//     Edit personal info in: js/config.js
-//     Then run:  python build.py
+//     • Edit posts in:       posts/research/*.md
+//                            posts/blogs/*.md
+//     • Edit personal info:  js/config.js
+//     • Then run:            python build.py
 // ============================================================
 
-{config_content}
-
-// ── Posts (auto-generated from posts/ folder) ─────────────
-
+// Append posts to the SITE_DATA object already created by config.js
 window.SITE_DATA.research = [
-    {research_js}
+{research_js}
 ];
 
 window.SITE_DATA.blogs = [
-    {blogs_js}
+{blogs_js}
 ];
 """
 
@@ -215,8 +160,7 @@ window.SITE_DATA.blogs = [
     print("\nNext steps:")
     print("  git add .")
     print('  git commit -m "update posts"')
-    print("  git push")
-    print()
+    print("  git push\n")
 
 
 if __name__ == "__main__":
