@@ -1,7 +1,7 @@
 ---
 id: research-5
 emoji: 
-image: "images/research/ffclip.jpg"
+image: "images/research/ffclip.png"
 date: 2023-01-03
 title: One Model to Edit Them All:Free-Form Text-Driven Image Manipulation with Semantic Modulations
 title_zh: 一统天下的模型:基于语义调制支持自由文本输入的图像编辑

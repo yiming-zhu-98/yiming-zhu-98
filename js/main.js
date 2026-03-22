@@ -222,7 +222,7 @@
     }).join('');
     const socials = ab.socials.map(s => `<a href="${s.url}" class="social-link" target="_blank">${s.label}</a>`).join('');
     const avatarHtml = ab.avatar
-      ? `<img src="${ab.avatar}" alt="avatar">`
+      ? `<img src="${ab.avatar}" alt="avatar" loading="lazy">`
       : `<div class="avatar-placeholder">${ab.avatar_emoji}</div>`;
 
     return `
@@ -361,7 +361,7 @@
     // Links
     html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
     // Images
-    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
+    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" loading="lazy">');
     // Tables
     html = html.replace(/((\|.+\|\n)+)/g, function (match) {
       const rows = match.trim().split('\n').filter(r => !/^\|[\s\-|]+\|$/.test(r));
