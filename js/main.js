@@ -56,7 +56,7 @@
     // Re-init hero canvas (3D) because buildPages() destroyed the old canvas element
     if (window._heroThreeCleanup) { window._heroThreeCleanup(); window._heroThreeCleanup = null; }
     setTimeout(initHeroCanvas, 50);
-    showToast(currentLang === 'en' ? 'Switched to English' : '已切换为中文');
+    showToast(currentLang === 'en' ? '→ EN' : '→ 中文');
   }
   function t(key) {
     return data.i18n[currentLang][key] || key;
@@ -113,7 +113,9 @@
     nav.innerHTML = pages.map(p => `
     <a href="#" class="nav-link" data-page="${p.id}" data-i18n="${p.key}" onclick="window.COSMOS.navigateTo('${p.id}'); return false;">${t(p.key)}</a>
   `).join('');
-    // Append navbar INTO top-bar on the right side
+
+    // Always inside top-bar — CSS handles mobile (position:fixed bottom)
+    // This way resize from desktop→mobile→desktop always works correctly
     document.getElementById('top-bar').appendChild(nav);
   }
 
@@ -469,12 +471,26 @@
     wrap.style.background = 'transparent';
 
     const isLight = () => document.documentElement.getAttribute('data-theme') === 'light';
-    const size = wrap.offsetWidth || 440;
 
-    // Load Three.js dynamically
+    // Get actual rendered size
+    let size = wrap.getBoundingClientRect().width;
+    if (!size || size < 10) {
+      size = window.innerWidth <= 768 ? 260 : 440;
+    }
+    // Cap to viewport width on mobile to prevent overflow
+    if (window.innerWidth <= 768) {
+      size = Math.min(size, window.innerWidth - 24);
+    }
+
+    // Load Three.js dynamically — check if already loaded
+    if (typeof THREE !== 'undefined') {
+      initThree(wrap, size, isLight);
+      return;
+    }
     const script = document.createElement('script');
     script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
     script.onload = () => initThree(wrap, size, isLight);
+    script.onerror = () => console.warn('Three.js failed to load');
     document.head.appendChild(script);
   }
 
@@ -489,7 +505,11 @@
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(size, size);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.domElement.style.width = size + 'px';
+    renderer.domElement.style.height = size + 'px';
+    renderer.domElement.style.borderRadius = '50%';
+    const isMobile = window.innerWidth <= 768;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     wrap.appendChild(renderer.domElement);
@@ -815,11 +835,20 @@
 
     animate();
 
+    // Handle window resize
+    function onResize() {
+      const newSize = wrap.getBoundingClientRect().width || size;
+      renderer.setSize(newSize, newSize);
+      camera.updateProjectionMatrix();
+    }
+    window.addEventListener('resize', onResize);
+
     // Stop old animation if theme changes and restart
     window._heroThreeCleanup = () => {
       if (animId) cancelAnimationFrame(animId);
+      window.removeEventListener('resize', onResize);
       renderer.dispose();
-      wrap.removeChild(renderer.domElement);
+      if (wrap.contains(renderer.domElement)) wrap.removeChild(renderer.domElement);
     };
   }
 

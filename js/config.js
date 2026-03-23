@@ -33,7 +33,7 @@ window.SITE_DATA = {
       tag_research: "RESEARCH",
       tag_blog: "BLOG",
       posted_on: "Posted on",
-      lang_btn: "EN / 中",
+      lang_btn: "EN",
       theme_day: "☀️",
       theme_night: "🌙",
     },
@@ -57,7 +57,7 @@ window.SITE_DATA = {
       tag_research: "研究",
       tag_blog: "博客",
       posted_on: "发布于",
-      lang_btn: "中 / EN",
+      lang_btn: "中",
       theme_day: "☀️",
       theme_night: "🌙",
     }
